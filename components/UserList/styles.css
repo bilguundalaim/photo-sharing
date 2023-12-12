@@ -1,0 +1,23 @@
+.user-container > div {
+  display: flex;
+  align-items: center;
+}
+
+.user-container > div > div, .green {
+  width: 25px;
+  height: 20px;
+  border-radius: 50%;
+  margin-right: 8px;
+  display: grid;
+  place-content: center;
+  color: white;
+}
+
+.green {
+  background-color: green;
+}
+
+.user-container > div > div:nth-child(3) {
+  background-color: red;
+  margin-left: 8px;
+}

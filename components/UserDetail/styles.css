@@ -1,0 +1,10 @@
+.detail-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-item {
+  padding: 8px;
+  max-width: 600px;
+}

@@ -1,0 +1,5 @@
+.comment-container {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
