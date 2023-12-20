@@ -7,13 +7,15 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  TextField,
 } from "@mui/material";
 import { Link } from "react-router-dom";
+import { MentionsInput, Mention } from "react-mentions";
 
 import "./styles.css";
 import axios from "axios";
 import PhotoContext from "../../contexts/photoContext";
+import mentionStyle from "../../mentionStyle";
+import mentionsInputStyle from "../../mentionsInputStyle";
 
 /**
  * Define UserPhotos, a React component of CS142 Project 5.
@@ -30,6 +32,7 @@ class UserPhotos extends React.Component {
       dialogOpen: false,
       commentText: "",
       currentPhotoId: "",
+      users: null,
     };
   }
 
@@ -40,15 +43,20 @@ class UserPhotos extends React.Component {
     const user = axios.get(
       `http://localhost:3000/user/${this.props.match.params.userId}`
     );
+    const users = axios.get("http://localhost:3000/user/list");
 
-    Promise.all([photos, user])
-      .then(([photosResponse, userResponse]) => {
+    Promise.all([photos, user, users])
+      .then(([photosResponse, userResponse, usersResponse]) => {
         this.setState(
           {
             jsonData: photosResponse.data,
             firstname: userResponse.data.first_name,
             lastname: userResponse.data.last_name,
-          },
+            users: usersResponse.data.map((element) => ({
+              id : element._id, 
+              display: `${element.first_name} ${element.last_name}`
+            })),
+          }, 
           callback
         );
       })
@@ -118,7 +126,6 @@ class UserPhotos extends React.Component {
     }
 
     if (this.prevContext.newPhotoCount !== this.context.newPhotoCount) {
-      console.log("Shine zurag");
       this.prevContext = this.context;
       this.getJsonData();
     }
@@ -159,9 +166,25 @@ class UserPhotos extends React.Component {
   };
 
   handleCommentSubmit = (photo_id) => {
-    axios
+    // Check if there is an mentioned user. If there is extract display and id from comment.
+    const mentionRegex = /@\[([^)]+)\]\(([^)]+)\)/;
+    const match = this.state.commentText.match(mentionRegex);
+    let mentioned_userId;
+
+    // Get mentioned user's id and change comment to only user's name.
+    if (match) {
+      mentioned_userId = match[2];
+    }
+
+    const updatedComment = this.state.commentText.replace(mentionRegex, '@$1');
+
+    this.setState({
+      commentText: updatedComment,
+    }, () => {
+      axios
       .post(`http://localhost:3000/commentsOfPhoto/${photo_id}`, {
         comment: this.state.commentText,
+        mentioned_userId: mentioned_userId,
       })
       .then(() => {
         this.handleCloseDialog();
@@ -170,6 +193,7 @@ class UserPhotos extends React.Component {
       .catch((error) => {
         console.error("Error adding new comment: ", error);
       });
+    });
   };
 
   handleCommentChange = (event) => {
@@ -212,7 +236,7 @@ class UserPhotos extends React.Component {
                             0,
                             10
                           );
-                          const username = `${comment.user.first_name} ${comment.user.last_name}`;
+                          const username = comment.user.first_name.toLowerCase();
                           return (
                             <div key={commentId} className="comment">
                               <div>
@@ -248,28 +272,25 @@ class UserPhotos extends React.Component {
                     >
                       <DialogTitle>Add a Comment</DialogTitle>
                       <DialogContent>
-                        <TextField
-                          autoFocus
-                          margin="dense"
-                          id="comment"
-                          label="Comment"
-                          type="text"
-                          fullWidth
+                        <MentionsInput 
                           value={this.state.commentText}
                           onChange={this.handleCommentChange}
-                        />
+                          className="mentions-input"
+                          style={mentionsInputStyle}
+                        >
+                          <Mention 
+                            trigger="@"
+                            data={this.state.users}
+                            style={mentionStyle}
+                          />
+                        </MentionsInput>
                       </DialogContent>
                       <DialogActions>
-                        <Button
-                          onClick={this.handleCloseDialog}
-                          color="primary"
-                        >
+                        <Button onClick={this.handleCloseDialog} color="primary">
                           Cancel
                         </Button>
                         <Button
-                          onClick={() => this.handleCommentSubmit(
-                              jsonData[this.state.currentPhotoIndex]._id
-                          )}
+                          onClick={() => this.handleCommentSubmit(this.state.currentPhotoId)}
                           color="primary"
                         >
                           Submit
@@ -371,16 +392,18 @@ class UserPhotos extends React.Component {
                   >
                     <DialogTitle>Add a Comment</DialogTitle>
                     <DialogContent>
-                      <TextField
-                        autoFocus
-                        margin="dense"
-                        id="comment"
-                        label="Comment"
-                        type="text"
-                        fullWidth
+                      <MentionsInput 
                         value={this.state.commentText}
                         onChange={this.handleCommentChange}
-                      />
+                        className="mentions-input"
+                        style={mentionsInputStyle}
+                      >
+                        <Mention 
+                          trigger="@"
+                          data={this.state.users}
+                          style={mentionStyle}
+                        />
+                      </MentionsInput>
                     </DialogContent>
                     <DialogActions>
                       <Button onClick={this.handleCloseDialog} color="primary">

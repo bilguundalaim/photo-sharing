@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 
 import "./styles.css";
 import axios from "axios";
+import Mentioned from "../Mentioned/index.jsx";
 
 /**
  * Define UserDetail, a React component of CS142 Project 5.
@@ -31,7 +32,6 @@ class UserDetail extends React.Component {
   };
 
   componentDidUpdate(prevProps) {
-    console.log("UserDetail updated.");
     if (prevProps.match.params.userId !== this.props.match.params.userId) {
       this.getUserDetail(() => {
         const firstname = this.state.userDetail.first_name;
@@ -42,7 +42,6 @@ class UserDetail extends React.Component {
   }
 
   componentDidMount() {
-    console.log("UserDetail mounted");
     this.getUserDetail(() => {
       const firstname = this.state.userDetail.first_name;
       const lastname = this.state.userDetail.last_name;
@@ -73,6 +72,7 @@ class UserDetail extends React.Component {
           <Link to={`/photos/${this.state.userDetail._id}`}>
             <Button variant="contained">PHOTOS</Button>
           </Link>
+          <Mentioned userId={this.props.match.params.userId}/>
         </div>
       )
     );

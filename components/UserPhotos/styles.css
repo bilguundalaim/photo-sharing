@@ -46,3 +46,8 @@ img {
   position: absolute;
   bottom: 0;
 }
+
+.mentions-input {
+  width: 250px;
+  height: 150px;
+}
