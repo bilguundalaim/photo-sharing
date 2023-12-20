@@ -120,6 +120,8 @@ router.post("/commentsOfPhoto/:photo_id", function (request, response) {
 
   const photoId = request.params.photo_id;
   const comment = request.body.comment;
+  // Get mentioned_userId from request. 
+  const mentioned_userId = request.body.mentioned_userId;
 
   if (comment.length === 0) {
     response.status(400).send("Empty comment");
@@ -136,6 +138,11 @@ router.post("/commentsOfPhoto/:photo_id", function (request, response) {
     if (!info) {
       response.status(404).send("Photo not found");
       return;
+    }
+
+    // If there is an mentioned user. Add the user into photo's mentioned_users array.
+    if (mentioned_userId) {
+      info.mentioned_users.push(mentioned_userId);
     }
 
     info.comments.push({

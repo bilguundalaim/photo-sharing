@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const router = express.Router();
 
 const User = require("../schema/user.js");
+const Photo = require("../schema/photo.js");
 const { makePasswordEntry } = require("../cs142password.js");
 /**
  * URL /user/list - Returns all the User objects.
@@ -114,6 +115,52 @@ router.post("/user", function (request, response) {
 
       response.status(200).send(JSON.stringify(newUser));
     });
+  });
+});
+
+// Get all photos that the user was mentioned.
+router.get("/user/mention/:id", async function (request, response) {
+  // if (!request.session.userId || request.session.userId === "") {
+  //   response.status(401).send("Unauthorized");
+  //   return;
+  // }
+
+  const userId = request.params.id;
+
+  Photo.find({}, async function (err, photos) {
+    if (err) {
+      console.error("Error in /user/mention/:id:", err);
+      response.status(500).send(JSON.stringify(err));
+      return;
+    }
+
+    const photosWithMention = [];
+    const promises = photos.map(async (photo) => {
+      const userPromises = photo.mentioned_users.map(async (user) => {
+        if (user.toString() === userId) {
+          try {
+            const owner = await User.findById(photo.user_id);
+            const username = `${owner.first_name} ${owner.last_name}`;
+
+            const responseItem = {
+              file_name: photo.file_name,
+              user_id: photo.user_id,
+              user_name: username,
+            };
+
+            photosWithMention.push(responseItem);
+          } catch (error) {
+            console.error("Error in /user/mention/:id:", error);
+            response.status(500).send(JSON.stringify(error));
+          }
+        }
+      });
+
+      await Promise.all(userPromises);
+    });
+
+    await Promise.all(promises);
+    response.status(200).json(photosWithMention);
   });
 });
 
